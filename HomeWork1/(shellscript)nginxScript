@@ -1,0 +1,10 @@
+#!/bin/bash
+sudo yum install nginx -y
+sudo chmod +x /usr/share/nginx/html/index.html
+cd /usr/share/nginx/html
+{ echo '<html>';
+echo '<body>';
+echo '<h1>Opsschool Rules</h1>';
+echo '</body>';
+echo '</html>';} > index.html
+sudo service nginx start
