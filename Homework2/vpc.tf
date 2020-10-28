@@ -5,120 +5,26 @@ resource "aws_vpc" "default" {
         Name = "terraform-aws-vpc"
     }
 }
-
 resource "aws_internet_gateway" "default" {
     vpc_id = aws_vpc.default.id
-}
-
-/*
-  NAT Instance
-*/
-resource "aws_security_group" "nat" {
-    name = "vpc_nat"
-    description = "Allow traffic to pass from the private subnet to the internet"
-
-    ingress {
-        from_port = 80
-        to_port = 80
-        protocol = "tcp"
-        cidr_blocks = [var.private_subnet_cidr]
-    }
-    ingress {
-        from_port = 443
-        to_port = 443
-        protocol = "tcp"
-        cidr_blocks = [var.private_subnet_cidr]
-    }
-    ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-    ingress {
-        from_port = -1
-        to_port = -1
-        protocol = "icmp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    egress {
-        from_port = 80
-        to_port = 80
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-    egress {
-        from_port = 443
-        to_port = 443
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-    egress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = [var.vpc_cidr]
-    }
-    egress {
-        from_port = -1
-        to_port = -1
-        protocol = "icmp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    vpc_id = aws_vpc.default.id
-
-    tags ={
-        Name = "NATSG"
-    }
-}
-
-resource "aws_instance" "nat" {
-    count = var.resource_count
-    ami = data.aws_ami.ubuntu.id
-    availability_zone = var.azs[count.index]
-    instance_type = "t2.micro"
-    key_name = aws_key_pair.terraform-key.key_name
-    vpc_security_group_ids = [aws_security_group.nat.id]
-    subnet_id = aws_subnet.az1-public.id
-    associate_public_ip_address = true
-    source_dest_check = false
-
-    tags ={
-        Name = "vpc_nat${count.index}"
-    }
-}
-
-resource "aws_eip" "nat" {
-    count = var.resource_count
-    instance = aws_instance.nat[count.index].id
-    vpc = true
-}
-
-resource "aws_nat_gateway" "nat_gateway" {
-    count = var.resource_count
-    allocation_id = aws_eip.nat[count.index].id
-    subnet_id = aws_subnet.az1-public.id
-    tags = {
-     "Name" = "NatGateway"
-    }
 }
 /*
   Public Subnet
 */
-resource "aws_subnet" "az1-public" {
+resource "aws_subnet" "public-subnet" {
+    count = length(var.public_subnet_cidr)
     vpc_id = aws_vpc.default.id
 
-    cidr_block = var.public_subnet_cidr
-    availability_zone = var.azs[0]
+    cidr_block = var.public_subnet_cidr[count.index]
+    availability_zone = var.azs[count.index]
 
     tags ={
-        Name = "Public Subnet"
+        Name = "Public Subnet ${count.index}"
     }
 }
 
-resource "aws_route_table" "az1-public" {
+resource "aws_route_table" "public-route" {
+    count = length(aws_subnet.public-subnet.*.id)
     vpc_id = aws_vpc.default.id
 
     route {
@@ -127,31 +33,32 @@ resource "aws_route_table" "az1-public" {
     }
 
     tags ={
-        Name = "Public Subnet"
+        Name = "Public Subnet ${count.index}"
     }
 }
 
-resource "aws_route_table_association" "az1-public" {
-    subnet_id = aws_subnet.az1-public.id
-    route_table_id = aws_route_table.az1-public.id
+resource "aws_route_table_association" "public-association" {
+    count = length(aws_route_table.public-route.*.id) 
+    subnet_id = aws_subnet.public-subnet[count.index].id
+    route_table_id = aws_route_table.public-route[count.index].id
 }
 
 /*
   Private Subnet
 */
-resource "aws_subnet" "az2-private" {
-    count = var.resource_count
+resource "aws_subnet" "private-subnet" {
+    count = length(var.private_subnet_cidr)
     vpc_id = aws_vpc.default.id
-    cidr_block = var.private_subnet_cidr
+    cidr_block = var.private_subnet_cidr[count.index]
     availability_zone = var.azs[count.index]
     tags ={
-        Name = "Private Subnet"
+        Name = "Private Subnet ${count.index}"
     }
 }
 
-resource "aws_route_table" "az2-private" {
+resource "aws_route_table" "private-route" {
     vpc_id = aws_vpc.default.id
-    count = var.resource_count
+    count = length(aws_subnet.private-subnet.*.id)
     route {
         cidr_block = "0.0.0.0/0"
         nat_gateway_id = aws_nat_gateway.nat_gateway[count.index].id
@@ -162,8 +69,8 @@ resource "aws_route_table" "az2-private" {
     }
 }
 
-resource "aws_route_table_association" "az2-private" {
-    count = var.resource_count
-    subnet_id = aws_subnet.az2-private[count.index].id
-    route_table_id = aws_route_table.az2-private[count.index].id
+resource "aws_route_table_association" "private-association" {
+    count = length(aws_route_table.private-route.*.id)
+    subnet_id = aws_subnet.private-subnet[count.index].id
+    route_table_id = aws_route_table.private-route[count.index].id
 }

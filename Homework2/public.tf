@@ -12,8 +12,8 @@ resource "aws_security_group" "web" {
         cidr_blocks = ["0.0.0.0/0"]
     }
     ingress {
-        from_port = 443
-        to_port = 443
+        from_port = 22
+        to_port = 22
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -34,23 +34,15 @@ resource "aws_security_group" "web" {
 resource "aws_instance" "web" {
     count = var.resource_count
     ami = data.aws_ami.ubuntu.id
-    availability_zone = var.azs[0]
+    availability_zone = var.azs[count.index]
     instance_type = "t2.micro"
     key_name = aws_key_pair.terraform-key.key_name
     vpc_security_group_ids = [aws_security_group.web.id]
-    subnet_id = aws_subnet.az1-public.id
+    subnet_id = aws_subnet.public-subnet[count.index].id
     associate_public_ip_address = true
-    source_dest_check = false
-
 
     tags ={
         Name = "web_server${count.index}"
 
     }
-}
-
-resource "aws_eip" "web" {
-    count = var.resource_count
-    instance = aws_instance.web[count.index].id
-    vpc = true
 }

@@ -18,7 +18,7 @@ resource "aws_elb" "bar" {
     }
 
     instances = aws_instance.web.*.id
-    subnets = [aws_subnet.az1-public.id]
+    subnets = aws_subnet.public-subnet.*.id
     cross_zone_load_balancing = true
     idle_timeout = 400
     connection_draining = true

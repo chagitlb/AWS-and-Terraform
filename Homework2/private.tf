@@ -24,13 +24,6 @@ resource "aws_security_group" "db" {
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-    egress {
-        from_port = 443
-        to_port = 443
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
     vpc_id = aws_vpc.default.id
 
     tags ={
@@ -41,12 +34,11 @@ resource "aws_security_group" "db" {
 resource "aws_instance" "db" {
     count = var.resource_count
     ami = data.aws_ami.ubuntu.id
-    availability_zone = var.azs[1]
+    availability_zone = var.azs[count.index]
     instance_type = "t2.micro"
     key_name = aws_key_pair.terraform-key.key_name
     vpc_security_group_ids = [aws_security_group.db.id]
-    subnet_id = aws_subnet.az2-private[count.index].id
-    source_dest_check = false
+    subnet_id = aws_subnet.private-subnet[count.index].id
 
     tags ={
         Name = "DB Server${count.index}"
