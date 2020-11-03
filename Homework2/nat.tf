@@ -16,3 +16,5 @@ resource "aws_nat_gateway" "nat_gateway" {
      "Name" = "NatGateway ${count.index}"
     }
 }
+
+

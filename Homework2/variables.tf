@@ -32,3 +32,8 @@ variable "private_subnet_cidr" {
 variable "resource_count" {
    default = 2
 }
+variable "ingress_ports" {
+  type        = list(number)
+  description = "list of ingress ports"
+  default     = [22]
+}

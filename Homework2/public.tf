@@ -17,11 +17,11 @@ resource "aws_security_group" "web" {
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-    ingress {
-        from_port = -1
-        to_port = -1
-        protocol = "icmp"
-        cidr_blocks = ["0.0.0.0/0"]
+    egress {
+      from_port   = 0
+      to_port     = 0
+      protocol    = -1
+      cidr_blocks = ["0.0.0.0/0"]
     }
 
     vpc_id = aws_vpc.default.id
@@ -40,7 +40,13 @@ resource "aws_instance" "web" {
     vpc_security_group_ids = [aws_security_group.web.id]
     subnet_id = aws_subnet.public-subnet[count.index].id
     associate_public_ip_address = true
+    connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user"
+    private_key = aws_key_pair.terraform-key.key_name
 
+  }
     tags ={
         Name = "web_server${count.index}"
 
