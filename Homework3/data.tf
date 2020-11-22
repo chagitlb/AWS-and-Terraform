@@ -1,6 +1,14 @@
 provider "aws" {
   region = var.aws_region
 }
+terraform {
+  backend "s3" {
+    bucket = "chagit-terraform-bkt"
+    key    = "path/to/my/key"
+    region = "us-east-1"
+  }
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 

@@ -57,6 +57,7 @@ variable "nginx_install" {
     { echo '<html>';
     echo '<body>';
     echo '<h1>Opsschool Rules</h1>';
+    echo '<h2>$HOSTNAME</h2>';
     echo '</body>';
     echo '</html>';} > index.html
     sudo service nginx start
