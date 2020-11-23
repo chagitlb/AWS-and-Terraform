@@ -28,7 +28,6 @@ resource "aws_subnet" "public-subnet" {
 }
 
 resource "aws_route_table" "public-route" {
-    count = length(aws_subnet.public-subnet.*.id)
     vpc_id = aws_vpc.vpc.id
 
     route {
@@ -37,14 +36,14 @@ resource "aws_route_table" "public-route" {
     }
 
     tags ={
-        Name = "Public Subnet ${count.index}- ${var.name}"
+        Name = "Public Subnet ${var.name}"
     }
 }
 
 resource "aws_route_table_association" "public-association" {
-    count = length(aws_route_table.public-route.*.id) 
+    count = length(aws_subnet.public-subnet.*.id) 
     subnet_id = aws_subnet.public-subnet[count.index].id
-    route_table_id = aws_route_table.public-route[count.index].id
+    route_table_id = aws_route_table.public-route.id
 }
 /*
   Private Subnet
@@ -71,6 +70,11 @@ resource "aws_route_table" "private-route" {
     tags ={
         Name = "Private Subnet- ${var.name}"
     }
+}
+resource "aws_route_table_association" "private-association" {
+    count = length(aws_route_table.private-route.*.id)
+    subnet_id = aws_subnet.private-subnet[count.index].id
+    route_table_id = aws_route_table.private-route[count.index].id
 }
 /*
   NAT Instance
