@@ -54,6 +54,7 @@ variable "nginx_install" {
     sudo yum install nginx -y
     sudo chmod +x /usr/share/nginx/html/index.html
     cd /usr/share/nginx/html
+    HOSTNAME = 'curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/public-hostname'
     { echo '<html>';
     echo '<body>';
     echo '<h1>Opsschool Rules</h1>';
