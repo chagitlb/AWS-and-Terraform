@@ -51,7 +51,7 @@ variable "nginx_install" {
   type        = string
   default     = <<-EOF
     #!/bin/bash
-    sudo yum install nginx -y
+    sudo apt install nginx -y
     sudo chmod +x /usr/share/nginx/html/index.html
     cd /usr/share/nginx/html
     HOSTNAME = 'curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/public-hostname'
